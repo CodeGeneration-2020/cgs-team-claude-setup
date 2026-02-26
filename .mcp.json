@@ -1,0 +1,21 @@
+{
+  "mcpServers": {
+    "spec-kit": {
+      "command": "npx",
+      "args": ["-y", "@lsendel/spec-kit-mcp"],
+      "env": {}
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@anthropic-ai/mcp-server-playwright"]
+    },
+    "figma": {
+      "command": "npx",
+      "args": ["-y", "@anthropic-ai/mcp-server-figma"]
+    },
+    "chrome-devtools": {
+      "command": "npx",
+      "args": ["-y", "@anthropic-ai/mcp-server-chrome-devtools"]
+    }
+  }
+}
