@@ -28,14 +28,20 @@
 [PRINCIPLE_5_DESCRIPTION]
 <!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
 
+## Naming Conventions
+<!-- Recommended: Define file naming, component/class naming, variable/function naming, import ordering, API endpoint naming, database naming, branch naming, and commit message conventions. Each convention should be non-negotiable and enforceable by ESLint or code review. -->
+
+[NAMING_CONVENTIONS]
+<!-- Example subsections: File Naming, Component and Class Naming, Variable and Function Naming, Import Ordering, API Endpoint Naming (REST), Database Naming, Branch Naming, Commit Message Conventions -->
+
 ## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+<!-- Example: Technology Stack, Additional Constraints, Performance Standards, etc. -->
 
 [SECTION_2_CONTENT]
 <!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
 
 ## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+<!-- Example: Code Quality Standards, Development Workflow, Quality Gates, etc. -->
 
 [SECTION_3_CONTENT]
 <!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
