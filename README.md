@@ -169,6 +169,14 @@ Processes all tasks from `tasks.md` in order, delegating to backend and web deve
 /speckit.implement
 ```
 
+#### `/speckit.commit` — Logical Git Commits
+
+Creates logical, feature-grouped git commits from uncommitted changes. Runs lint/build pre-flight checks, groups changes by User Story, updates documentation incrementally per commit, and enforces a docs-first staging rule.
+
+```
+/speckit.commit
+```
+
 #### `/speckit.checklist` — Generate Quality Checklist
 
 Creates requirement quality checklists that validate whether specs are complete, clear, and testable (not implementation checklists).
@@ -271,6 +279,7 @@ Creates a structured bug report with screenshots, console errors, network reques
 /speckit.plan                              → plan.md + contracts + data model
 /speckit.tasks                             → tasks.md
 /speckit.implement                         → working code + tests
+/speckit.commit                            → logical feature-grouped commits
 /qa.fullpass                               → test results + bug reports
 ```
 
@@ -418,7 +427,7 @@ Now your design team can duplicate the Figma file, create redesigned versions, a
 **What you get:**
 - MCP servers (Playwright, Figma, Chrome DevTools) for browser testing and design integration
 - 3 specialized agents that understand your project's conventions
-- 16 skills for the full specify → plan → implement → QA lifecycle
+- 17 skills for the full specify → plan → implement → QA lifecycle
 - A constitution that enforces consistency across all future work
 - (Optional) Figma baseline for your design team to iterate on
 
@@ -643,6 +652,7 @@ This compares the live app against the Figma captures, classifying discrepancies
 │   │   ├── speckit.tasks.md           # Task breakdown
 │   │   ├── speckit.analyze.md         # Cross-artifact analysis
 │   │   ├── speckit.implement.md       # Task execution
+│   │   ├── speckit.commit.md          # Logical git commits
 │   │   ├── speckit.checklist.md       # Quality checklists
 │   │   ├── speckit.constitution.md    # Project governance
 │   │   ├── speckit.figmalink.md       # Figma-to-spec linking
