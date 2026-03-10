@@ -2,7 +2,7 @@
 
 A complete AI-assisted development workflow powered by [Claude Code](https://claude.com/claude-code), [Spec Kit](https://github.com/lsendel/spec-kit-mcp), and the Model Context Protocol (MCP).
 
-This repo provides the full infrastructure for spec-driven development: from writing feature specs, through planning and implementation, to QA and visual validation against Figma designs.
+This repo provides the full infrastructure for spec-driven development: from writing feature specs, through planning and implementation, to visual validation against Figma designs.
 
 ---
 
@@ -13,7 +13,7 @@ This repo provides the full infrastructure for spec-driven development: from wri
 - [Agents](#agents)
 - [Skills / Commands](#skills--commands)
   - [Specification Workflow](#specification-workflow)
-  - [QA Workflow](#qa-workflow)
+  - [Figma Workflow](#figma-workflow)
 - [Workflow Overview](#workflow-overview)
 - [Real-World Examples](#real-world-examples)
   - [Example 1: Setting Up Spec Kit on an Existing Project](#example-1-setting-up-spec-kit-on-an-existing-project)
@@ -93,17 +93,6 @@ Invoke directly:
 ```
 @web-developer implement the users page from this Figma link: https://figma.com/design/...
 ```
-
-### QA Agent
-
-| | |
-|---|---|
-| **File** | `.claude/agents/qa-agent.md` |
-| **Focus** | Testing and validation — e2e tests, manual browser testing, visual audits, bug reports |
-| **Tools** | Read, Write, Edit, Bash, Grep, Glob, Task + Figma MCP + Playwright MCP + Chrome DevTools MCP |
-| **Capabilities** | Codebase analysis, spec-based test plans, Playwright e2e tests, manual browser testing, Figma design comparison, structured bug reports |
-
-The QA agent is typically invoked through `/qa.*` skills rather than directly.
 
 ---
 
@@ -187,14 +176,6 @@ Creates or updates the project constitution — the non-negotiable rules governi
 
 **Produces:** `.specify/memory/constitution.md`
 
-#### `/speckit.figmalink` — Link Figma Designs to Spec
-
-Auto-matches Figma screens to User Stories in `spec.md` by analyzing screen names and story content.
-
-```
-/speckit.figmalink https://figma.com/design/abc123/MyDesign
-```
-
 #### `/speckit.taskstoissues` — Export Tasks to GitHub Issues
 
 Converts tasks from `tasks.md` into dependency-ordered GitHub issues.
@@ -203,61 +184,56 @@ Converts tasks from `tasks.md` into dependency-ordered GitHub issues.
 /speckit.taskstoissues
 ```
 
-### QA Workflow
+### Figma Workflow
 
-#### `/qa.fullpass` — Full QA Pass
+These skills handle the Figma design integration pipeline. Located in `.claude/skills/`.
 
-Comprehensive feature validation: manual browser testing, e2e tests, visual design comparison, and bug reports for every User Story.
+#### `/cgs-team-skills.figma.capture` — Capture Screens to Figma
 
-```
-/qa.fullpass
-```
-
-**Produces:** `reports/qa/YYYY-MM-DD-summary.md`, bug reports, e2e test files
-
-#### `/qa.e2e` — Write & Run E2E Tests
-
-Generates Playwright e2e tests from spec acceptance scenarios and edge cases, then runs them.
+Captures the app's screen states from e2e tests and pushes them into a Figma file as design frames.
 
 ```
-/qa.e2e
+/cgs-team-skills.figma.capture https://figma.com/design/abc123/file-name
+/cgs-team-skills.figma.capture https://figma.com/design/abc123/file-name --new
+/cgs-team-skills.figma.capture https://figma.com/design/abc123/file-name "Add Task Modal" --viewport=D,M
 ```
 
-**Produces:** `tests/e2e/<feature>/*.spec.ts`
+**Options:** `--new` (only new screens), `--viewport=D,M,T` (filter viewports), screen filter (substring match)
 
-#### `/qa.targeted` — Targeted Testing
+**Produces:** `tests/e2e/<feature>/capture-screens.spec.ts`, Figma frames
 
-Tests a specific User Story, route, or flow instead of the full feature.
+#### `/cgs-team-skills.figma.link` — Link Figma to Spec
 
-```
-/qa.targeted US3 - User Login Flow
-```
-
-#### `/qa.visual` — Visual Audit
-
-Compares rendered UI against Figma designs. Classifies discrepancies by type (layout, colors, typography, components, states) and severity.
+Generates the `## Screens` section in `spec.md` and auto-matches Figma frames to each screen by name similarity.
 
 ```
-/qa.visual
+/cgs-team-skills.figma.link https://figma.com/design/abc123/file-name
+/cgs-team-skills.figma.link https://figma.com/design/abc123/file-name US1,US3
+/cgs-team-skills.figma.link https://figma.com/design/abc123/file-name --force
 ```
 
-#### `/qa.codebase` — Codebase Analysis
+**Options:** `--force` (overwrite existing links), story filter
 
-Static analysis validating project structure and patterns against the constitution. No browser testing — pure code inspection.
+**Produces:** Updated `spec.md` with `## Screens` table and `**Design**:` links on User Stories
 
-```
-/qa.codebase
-```
+#### `/cgs-team-skills.figma.visual` — Visual Comparison
 
-#### `/qa.bugreport` — File Bug Report
-
-Creates a structured bug report with screenshots, console errors, network request logs, and spec traceability.
+Runs pixelmatch-based visual comparison of rendered UI against Figma designs. Each screen with a Figma Node value gets a pixel-level diff test.
 
 ```
-/qa.bugreport Login button does nothing when clicked on mobile viewport
+/cgs-team-skills.figma.visual
+/cgs-team-skills.figma.visual US1
+/cgs-team-skills.figma.visual --threshold=0.05
 ```
 
-**Produces:** `reports/qa/YYYY-MM-DD-HHmm-<slug>.md`
+**Options:** `--threshold=0.05` (override default 2% diff threshold), screen/story filter
+
+**Produces:** `tests/e2e/<feature>/figma-visual.spec.ts`, `tests/e2e/helpers/figma-compare.ts`
+
+**Pipeline:**
+```
+spec.md → e2e tests → /cgs-team-skills.figma.capture → /cgs-team-skills.figma.link → /cgs-team-skills.figma.visual
+```
 
 ---
 
@@ -271,27 +247,25 @@ Creates a structured bug report with screenshots, console errors, network reques
 /speckit.plan                              → plan.md + contracts + data model
 /speckit.tasks                             → tasks.md
 /speckit.implement                         → working code + tests
-/qa.fullpass                               → test results + bug reports
 ```
 
 ### Design-First Development
 
 ```
-/speckit.specify "feature description"     → spec.md
-/speckit.figmalink <figma-url>             → spec.md with Figma screen links
-/speckit.plan                              → plan.md
-/speckit.tasks                             → tasks.md
-@web-developer implement from Figma        → UI code
-/qa.visual                                 → design comparison report
+/speckit.specify "feature description"                         → spec.md
+/cgs-team-skills.figma.link <figma-url>                        → spec.md with Figma screen links
+/speckit.plan                                                  → plan.md
+/speckit.tasks                                                 → tasks.md
+@web-developer implement from Figma                            → UI code
+/cgs-team-skills.figma.visual                                  → pixel-level design comparison
 ```
 
-### QA-Only Pass
+### Figma Capture & Validation Pipeline
 
 ```
-/qa.codebase                               → structural analysis
-/qa.e2e                                    → e2e test suite
-/qa.visual                                 → Figma comparison
-/qa.fullpass                               → everything above + manual testing
+/cgs-team-skills.figma.capture <figma-url>                     → capture app screens to Figma
+/cgs-team-skills.figma.link <figma-url>                        → link Figma frames to spec
+/cgs-team-skills.figma.visual                                  → pixel-level comparison report
 ```
 
 ---
@@ -326,15 +300,7 @@ Claude will ask about your tech stack, architecture principles, testing requirem
 
 The constitution is written to `.specify/memory/constitution.md`. All future specs, plans, and implementations will follow these rules.
 
-**Step 3 — Verify the setup**
-
-```
-/qa.codebase
-```
-
-This runs a static analysis of your existing code against the new constitution. It will flag any violations — treat these as a backlog, not blockers.
-
-**Step 4 — Create specs for existing and new features**
+**Step 3 — Create specs for existing and new features**
 
 Since this is an existing project, start by asking Claude to analyze what's already built. Point it at the source code and any existing documentation:
 
@@ -374,7 +340,7 @@ Generates the technical plan: architecture, data model, API contracts, and dev e
 
 Breaks the plan into dependency-ordered, actionable tasks ready for implementation.
 
-**Step 5 — Implement**
+**Step 4 — Implement**
 
 ```
 /speckit.implement
@@ -382,43 +348,26 @@ Breaks the plan into dependency-ordered, actionable tasks ready for implementati
 
 Claude processes tasks in order, delegating to the backend-developer and web-developer agents. Tests are written before code. Completed tasks are checked off in `tasks.md`.
 
-**Step 6 — QA**
+**Step 5 (optional) — Capture existing screens into Figma**
+
+If you have e2e tests, capture your app's screens into Figma. This gives your design team a baseline to work from for future redesigns:
 
 ```
-/qa.fullpass
+/cgs-team-skills.figma.capture https://figma.com/design/abc123/MyApp-Current-UI
 ```
 
-Runs manual browser testing, e2e tests, and files bug reports for anything that doesn't match the spec.
-
-**Step 7 (optional) — Capture existing screens into Figma**
-
-If you don't have Figma designs yet, capture your running app's screens into Figma. This gives your design team a baseline to work from for future redesigns:
+Then link the Figma file to your specs:
 
 ```
-Capture http://localhost:3000/dashboard into Figma as a new file called "MyApp - Current UI"
+/cgs-team-skills.figma.link https://figma.com/design/abc123/MyApp-Current-UI
 ```
 
-Then capture the remaining screens into the same file:
-
-```
-Capture these pages into the Figma file https://figma.com/design/abc123/MyApp-Current-UI:
-- http://localhost:3000/login
-- http://localhost:3000/settings
-- http://localhost:3000/users
-```
-
-Once captured, link the Figma file to your specs:
-
-```
-/speckit.figmalink https://figma.com/design/abc123/MyApp-Current-UI
-```
-
-Now your design team can duplicate the Figma file, create redesigned versions, and developers can use `/qa.visual` to validate implementations against the new designs.
+Now your design team can duplicate the Figma file, create redesigned versions, and developers can use `/cgs-team-skills.figma.visual` to validate implementations against the new designs.
 
 **What you get:**
-- MCP servers (Playwright, Figma, Chrome DevTools) for browser testing and design integration
-- 3 specialized agents that understand your project's conventions
-- 16 skills for the full specify → plan → implement → QA lifecycle
+- MCP servers (Playwright, Figma, Chrome DevTools) for browser automation and design integration
+- 2 specialized agents (backend and web developer) that understand your project's conventions
+- 12 skills for the full specify → plan → implement → Figma validation lifecycle
 - A constitution that enforces consistency across all future work
 - (Optional) Figma baseline for your design team to iterate on
 
@@ -493,13 +442,13 @@ This cross-checks `spec.md`, `plan.md`, and `tasks.md` for consistency. It catch
 
 **Step 7 (optional) — Link Figma designs to specs**
 
-If you have Figma designs for this feature, link them to the spec so agents and QA can reference them:
+If you have Figma designs for this feature, link them to the spec:
 
 ```
-/speckit.figmalink https://figma.com/design/abc123/MyDesign
+/cgs-team-skills.figma.link https://figma.com/design/abc123/MyDesign
 ```
 
-Claude reads the Figma file, finds all screens, and auto-matches them to User Stories in your `spec.md`. Each story gets a `**Figma Screens:**` section with direct links to the relevant design frames. This enables `/qa.visual` comparisons later.
+Claude reads the Figma file, finds all frames, and auto-matches them to screens in your `spec.md`. Each User Story gets a `**Design**:` link to the relevant Figma frame. This enables `/cgs-team-skills.figma.visual` pixel-level comparisons later.
 
 **Step 8 — Implement remaining work**
 
@@ -521,107 +470,75 @@ If Figma screens are linked, the web-developer agent will pull design context di
 
 ### Example 3: Capturing App Screens into Figma
 
-You have a running application but no Figma designs. You want to capture every screen into Figma so you can use the visual QA workflow (`/qa.visual`) and link designs to specs (`/speckit.figmalink`).
+You have a running application with e2e tests but no Figma designs. You want to capture every screen into Figma so you can use the visual validation workflow and link designs to specs.
 
 **Prerequisites:**
-- Your app must be running locally (e.g., `http://localhost:3000`)
+- E2e tests must exist for the feature (in `tests/e2e/<feature>/`)
 - You need a Figma account with edit access
+- Playwright must be configured with a `webServer` entry (no manual dev server needed)
 
-**Step 1 — Start your app**
+**Step 1 — Capture screens into Figma**
 
-```bash
-# In a separate terminal
-npm run dev
-```
-
-**Step 2 — Capture screens into a new Figma file**
-
-In Claude Code, ask to capture your first screen:
+The capture skill discovers screens from your e2e tests, generates a Playwright capture script, and pushes frames to Figma:
 
 ```
-Capture http://localhost:3000/dashboard into Figma as a new file called "My App Screens"
+/cgs-team-skills.figma.capture https://figma.com/design/abc123/My-App-Screens
 ```
 
-Claude will use the Figma MCP's `generate_figma_design` tool to:
-1. Open the URL in a headless browser
-2. Capture the rendered page
-3. Create a new Figma file with the captured design
+Claude will:
+1. Analyze your e2e test files to discover all screen states
+2. Determine viewports per screen type (Desktop/Tablet/Mobile for fundamental states, Desktop/Mobile for modals)
+3. Check which screens already exist in the Figma file
+4. Present a capture plan for your approval
+5. Generate `capture-screens.spec.ts` and run it
 
-You'll receive a Figma URL. Open it to claim the file.
+**Step 2 — Capture only new screens**
 
-**Step 3 — Capture remaining screens into the same file**
-
-Once you have the file, add more screens to it:
-
-```
-Capture these pages into the existing Figma file https://figma.com/design/abc123/My-App-Screens:
-- http://localhost:3000/login
-- http://localhost:3000/signup
-- http://localhost:3000/settings
-- http://localhost:3000/users
-- http://localhost:3000/users/123
-```
-
-Each page is captured and added as a separate frame in the Figma file. Name each frame to match the route or feature (e.g., "Login", "Signup", "User Detail").
-
-**Step 4 — Capture responsive variants**
-
-For responsive designs, capture at different viewports. Ask Claude to resize before capturing:
+After adding new e2e tests, capture only the screens not yet in Figma:
 
 ```
-Capture http://localhost:3000/dashboard at mobile (375x812) and tablet (768x1024)
-viewport sizes into the Figma file https://figma.com/design/abc123/My-App-Screens
+/cgs-team-skills.figma.capture https://figma.com/design/abc123/My-App-Screens --new
 ```
 
-**Step 5 — Capture interactive states**
-
-For pages with multiple states (empty, loading, error, populated), capture each:
+**Step 3 — Capture specific screens or viewports**
 
 ```
-Capture these states of the users page into Figma:
-1. http://localhost:3000/users (populated list)
-2. Navigate to users, clear all data, capture the empty state
-3. Disconnect the API and capture the error state
+/cgs-team-skills.figma.capture https://figma.com/design/abc123/My-App-Screens "Add Task Modal" --viewport=D,M
 ```
 
-Claude will use Playwright MCP to navigate, interact with the page, and Chrome DevTools MCP to manipulate network conditions before each capture.
-
-**Step 6 — Link Figma screens to specs**
-
-Now that you have Figma designs, link them to your feature specs:
+**Step 4 — Link Figma frames to specs**
 
 ```
-/speckit.figmalink https://figma.com/design/abc123/My-App-Screens
+/cgs-team-skills.figma.link https://figma.com/design/abc123/My-App-Screens
 ```
 
-Claude reads the Figma file structure, finds all frames/screens, and auto-matches them to User Stories in your `spec.md` by comparing screen names to story content. The spec is updated with `**Figma Screens:**` links under each matching User Story.
+Claude reads the Figma file structure, auto-matches frames to screens by name similarity, and updates `spec.md` with the `## Screens` table and `**Design**:` links on each User Story.
 
-**Step 7 — Run visual QA**
+**Step 5 — Run visual comparison**
 
-With screens linked, you can now run visual audits anytime:
+With screens linked, run pixel-level comparison anytime:
 
 ```
-/qa.visual
+/cgs-team-skills.figma.visual
 ```
 
-This compares the live app against the Figma captures, classifying discrepancies by type (layout, colors, typography) and severity. As the app evolves, re-capture updated screens and re-run the audit to catch visual regressions.
+This generates a Playwright test that compares live rendered pages against Figma frames using pixelmatch with a 2% default threshold. As the app evolves, re-capture updated screens and re-run to catch visual regressions.
 
 **Full pipeline in action:**
 
 ```
-# 1. Capture all screens into Figma
-"Capture http://localhost:3000/login into a new Figma file"
-"Capture /dashboard, /settings, /users into the same file"
+# 1. Capture all screens into Figma from e2e tests
+/cgs-team-skills.figma.capture https://figma.com/design/abc123/...
 
-# 2. Link to specs
-/speckit.figmalink https://figma.com/design/abc123/...
+# 2. Link Figma frames to spec
+/cgs-team-skills.figma.link https://figma.com/design/abc123/...
 
-# 3. Visual QA against captures
-/qa.visual
+# 3. Pixel-level visual comparison
+/cgs-team-skills.figma.visual
 
 # 4. After code changes, re-capture and re-validate
-"Re-capture http://localhost:3000/dashboard into Figma"
-/qa.visual
+/cgs-team-skills.figma.capture https://figma.com/design/abc123/... "Dashboard"
+/cgs-team-skills.figma.visual
 ```
 
 ---
@@ -634,8 +551,7 @@ This compares the live app against the Figma captures, classifying discrepancies
 ├── .claude/
 │   ├── agents/
 │   │   ├── backend-developer.md       # Backend agent definition
-│   │   ├── web-developer.md           # Frontend agent definition
-│   │   └── qa-agent.md                # QA agent definition
+│   │   └── web-developer.md           # Frontend agent definition
 │   ├── commands/
 │   │   ├── speckit.specify.md         # Feature spec generation
 │   │   ├── speckit.clarify.md         # Spec clarification
@@ -645,14 +561,11 @@ This compares the live app against the Figma captures, classifying discrepancies
 │   │   ├── speckit.implement.md       # Task execution
 │   │   ├── speckit.checklist.md       # Quality checklists
 │   │   ├── speckit.constitution.md    # Project governance
-│   │   ├── speckit.figmalink.md       # Figma-to-spec linking
-│   │   ├── speckit.taskstoissues.md   # GitHub issue export
-│   │   ├── qa.fullpass.md             # Full QA pass
-│   │   ├── qa.e2e.md                  # E2E test generation
-│   │   ├── qa.targeted.md             # Targeted testing
-│   │   ├── qa.visual.md               # Visual audit
-│   │   ├── qa.codebase.md            # Codebase analysis
-│   │   └── qa.bugreport.md            # Bug reporting
+│   │   └── speckit.taskstoissues.md   # GitHub issue export
+│   ├── skills/
+│   │   ├── cgs-team-skills.figma.capture/  # Capture app screens to Figma
+│   │   ├── cgs-team-skills.figma.link/     # Link Figma frames to spec
+│   │   └── cgs-team-skills.figma.visual/   # Visual comparison against Figma
 │   └── settings.local.json            # Local permissions
 ├── .specify/
 │   ├── memory/
