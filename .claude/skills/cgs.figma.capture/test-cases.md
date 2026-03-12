@@ -1,6 +1,6 @@
 # Capture Skill — Edge Case Test Matrix
 
-Test cases for `/cgs-team-skills.figma.capture`. Organized by skill step and cross-cutting concerns.
+Test cases for `/cgs.figma.capture`. Organized by skill step and cross-cutting concerns.
 
 ---
 

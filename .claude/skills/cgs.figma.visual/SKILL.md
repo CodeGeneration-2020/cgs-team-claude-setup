@@ -1,5 +1,5 @@
 ---
-name: cgs-team-skills.figma.visual
+name: cgs.figma.visual
 description: Run pixelmatch-based visual comparison of rendered UI against Figma designs. Use when comparing implementation to Figma, running visual audits, or checking design fidelity.
 disable-model-invocation: true
 argument-hint: "[screen-filter] [--threshold=0.05]"
@@ -24,7 +24,7 @@ Generate and run a Playwright test suite that compares live rendered pages again
 
 **Pipeline position:**
 ```
-spec.md -> /cgs-team-skills.figma.capture -> /cgs-team-skills.figma.link -> /cgs-team-skills.figma.visual
+spec.md -> /cgs.figma.capture -> /cgs.figma.link -> /cgs.figma.visual
 ```
 
 ## Operating Constraints
@@ -58,7 +58,7 @@ If the branch name doesn't map to a feature directory, ask the user to specify t
 
 Extract: `Screen`, `Story`, `Route`, `Figma Node`, `Viewports`. Filter to screens with non-empty `Figma Node`.
 
-No Figma nodes: `"ERROR: No screens have Figma Node values. Run /cgs-team-skills.figma.link first."`
+No Figma nodes: `"ERROR: No screens have Figma Node values. Run /cgs.figma.link first."`
 
 #### 3b. Parse preconditions
 
@@ -355,8 +355,8 @@ For API failures: clear cache (`rm -rf tests/e2e/.figma-cache/`) and retry.
 **Passed**: M/N | **Failed**: K | **Skipped**: J
 
 ### Next Steps
-- Adjust threshold: `/cgs-team-skills.figma.visual --threshold=0.05`
-- Re-capture: `/cgs-team-skills.figma.capture {Figma URL}`
+- Adjust threshold: `/cgs.figma.visual --threshold=0.05`
+- Re-capture: `/cgs.figma.capture {Figma URL}`
 ```
 
 ## Reference
@@ -385,8 +385,8 @@ Always prefer project helper functions over raw Playwright commands.
 | Error | Message |
 |-------|---------|
 | Feature ID not resolved | `"ERROR: Could not determine feature ID from branch. Please specify."` |
-| No Screens section | `"ERROR: No ## Screens section. Run /cgs-team-skills.figma.link first."` |
-| No Figma nodes | `"ERROR: No Figma Node values. Run /cgs-team-skills.figma.link first."` |
+| No Screens section | `"ERROR: No ## Screens section. Run /cgs.figma.link first."` |
+| No Figma nodes | `"ERROR: No Figma Node values. Run /cgs.figma.link first."` |
 | FIGMA_TOKEN not set | `"WARNING: Tests will be skipped."` |
 | figma-compare.ts missing | Generate automatically (Step 5a) |
 | pixelmatch not installed | Install automatically (Step 5b) |

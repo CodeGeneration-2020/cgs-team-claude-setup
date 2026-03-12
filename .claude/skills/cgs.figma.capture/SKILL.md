@@ -1,5 +1,5 @@
 ---
-name: cgs-team-skills.figma.capture
+name: cgs.figma.capture
 description: Capture the app's screen states and push them to Figma as design frames. Use when the user wants to capture screens or push to Figma.
 disable-model-invocation: true
 argument-hint: "<figma-url> [screen-filter] [--new] [--viewport=D,M]"
@@ -19,12 +19,12 @@ Supported arguments:
 - **`--new`** -> only capture screens not yet present in the Figma file
 - **`--viewport=D,M`** -> limit captures to specific viewports (D=desktop, T=tablet, M=mobile)
 
-If no Figma URL is provided, abort with: `"ERROR: Figma URL is required. Usage: /cgs-team-skills.figma.capture <figma-url> [options]"`
+If no Figma URL is provided, abort with: `"ERROR: Figma URL is required. Usage: /cgs.figma.capture <figma-url> [options]"`
 
 Multiple arguments can be combined:
 ```
-/cgs-team-skills.figma.capture https://figma.com/design/abc123/file-name --new
-/cgs-team-skills.figma.capture https://figma.com/design/abc123/file-name "Add Task Modal" --viewport=D,M
+/cgs.figma.capture https://figma.com/design/abc123/file-name --new
+/cgs.figma.capture https://figma.com/design/abc123/file-name "Add Task Modal" --viewport=D,M
 ```
 
 ## Goal
@@ -35,7 +35,7 @@ The source of truth for screen states is the project's **existing e2e test files
 
 **Pipeline position:**
 ```
-spec.md -> e2e tests -> /cgs-team-skills.figma.capture -> /cgs-team-skills.figma.link -> /cgs-team-skills.figma.visual
+spec.md -> e2e tests -> /cgs.figma.capture -> /cgs.figma.link -> /cgs.figma.visual
 ```
 
 ## Prerequisites
@@ -329,10 +329,10 @@ If tests fail: read error output, fix, retry. After 2 failures per screen, mark 
 **Stale frames**: S
 
 ### Next Steps
-- To capture remaining screens: `/cgs-team-skills.figma.capture <figma-url>` (without --new)
-- To recapture a specific screen: `/cgs-team-skills.figma.capture <figma-url> "{Screen Name}"`
-- To compare against Figma designs: `/cgs-team-skills.figma.visual`
-- To link screens in spec.md: `/cgs-team-skills.figma.link <figma-url>`
+- To capture remaining screens: `/cgs.figma.capture <figma-url>` (without --new)
+- To recapture a specific screen: `/cgs.figma.capture <figma-url> "{Screen Name}"`
+- To compare against Figma designs: `/cgs.figma.visual`
+- To link screens in spec.md: `/cgs.figma.link <figma-url>`
 ```
 
 ## Reference
@@ -354,7 +354,7 @@ Different screen if: different routes, different seed data, or different UI inte
 
 | Error | Message |
 |-------|---------|
-| No Figma URL | `"ERROR: Figma URL is required. Usage: /cgs-team-skills.figma.capture <figma-url> [options]"` |
+| No Figma URL | `"ERROR: Figma URL is required. Usage: /cgs.figma.capture <figma-url> [options]"` |
 | Feature ID not resolved | `"ERROR: Could not determine feature ID from branch. Please specify."` |
 | No e2e test files | `"ERROR: No e2e test files found. Create e2e tests first."` |
 | No screens match filter | `"ERROR: No screens match filter '{filter}'."` |
