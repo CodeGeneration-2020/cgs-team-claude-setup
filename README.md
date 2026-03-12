@@ -17,9 +17,10 @@ This repo provides the full infrastructure for spec-driven development: from wri
   - [Figma Workflow](#figma-workflow)
 - [Workflow Overview](#workflow-overview)
 - [Real-World Examples](#real-world-examples)
-  - [Example 1: Setting Up Spec Kit on an Existing Project](#example-1-setting-up-spec-kit-on-an-existing-project)
-  - [Example 2: Converting Existing Docs and Code into Specs](#example-2-converting-existing-docs-and-code-into-specs)
-  - [Example 3: Capturing App Screens into Figma](#example-3-capturing-app-screens-into-figma)
+  - [Example 1: Full Feature Lifecycle — Spec to Release](#example-1-full-feature-lifecycle--spec-to-release)
+  - [Example 2: Setting Up Spec Kit on an Existing Project](#example-2-setting-up-spec-kit-on-an-existing-project)
+  - [Example 3: Converting Existing Docs and Code into Specs](#example-3-converting-existing-docs-and-code-into-specs)
+  - [Example 4: Capturing App Screens into Figma](#example-4-capturing-app-screens-into-figma)
 - [Project Structure](#project-structure)
 
 ---
@@ -313,6 +314,37 @@ spec.md → e2e tests → /cgs.figma.capture → /cgs.figma.link → /cgs.figma.
 
 ## Workflow Overview
 
+### Full Feature Lifecycle (Spec → Ship)
+
+This is the recommended end-to-end workflow for every feature you release. Each stage produces a commit, creating a clean audit trail.
+
+```
+# 1. SPECIFY — define what to build
+/speckit.specify "feature description"     → spec.md + branch          → commit
+/speckit.clarify                           → refined spec.md           → commit
+/speckit.plan                              → plan.md + contracts       → commit
+/speckit.tasks                             → tasks.md                  → commit
+/speckit.analyze                           → consistency check
+
+# 2. IMPLEMENT — build it (parallel agents)
+/speckit.implement                         → working code + tests      → commit
+
+# 3. TEST — generate E2E coverage
+/cgs.qa.e2e                                → Playwright test suites    → commit
+
+# 4. DESIGN SYNC — capture screens to Figma
+/cgs.figma.capture <figma-url>             → app screens in Figma      → commit
+
+# 5. LINK — connect Figma frames to spec
+/cgs.figma.link <figma-url>                → spec.md with design links → commit
+
+# 6. VISUAL — compare implementation vs design
+/cgs.figma.visual                          → pixel-level diff tests    → commit
+
+# 7. QA REPORT — full QA pass with release recommendation
+/cgs.qa.report                             → timestamped QA report     → commit
+```
+
 ### Standard Feature Development
 
 ```
@@ -346,7 +378,228 @@ spec.md → e2e tests → /cgs.figma.capture → /cgs.figma.link → /cgs.figma.
 
 ## Real-World Examples
 
-### Example 1: Setting Up Spec Kit on an Existing Project
+### Example 1: Full Feature Lifecycle — Spec to Release
+
+The complete workflow for shipping a feature from idea to QA-verified release. This is the standard process for every feature in your project.
+
+**Scenario:** You're building a task management feature for a project management app. The designer has prepared Figma mockups. You need to specify, implement, test, validate against designs, and produce a QA report.
+
+---
+
+**Stage 1 — Specify: Define what to build**
+
+Start by generating the feature specification from a natural language description:
+
+```
+/speckit.specify Task management — users can create, edit, delete, and
+reorder tasks within projects. Supports due dates, assignees, priority
+levels, and status transitions (todo → in progress → done). Includes
+kanban board and list views.
+```
+
+Claude creates a feature branch (`feature/task-management`), generates `spec.md` with user stories, acceptance scenarios, edge cases, and functional requirements.
+
+```
+/commit
+```
+
+Clarify any ambiguities — Claude asks up to 5 targeted questions and encodes answers back into the spec:
+
+```
+/speckit.clarify
+```
+
+> **Claude:** "Should task reordering be drag-and-drop only, or also support keyboard shortcuts for accessibility?"
+> **You:** "Both — drag-and-drop with keyboard arrow keys as alternative"
+
+```
+/commit
+```
+
+Generate the technical plan — architecture, data model, API contracts, and dev environment setup:
+
+```
+/speckit.plan
+/commit
+```
+
+Break the plan into dependency-ordered tasks ready for implementation:
+
+```
+/speckit.tasks
+/commit
+```
+
+Run cross-artifact analysis to catch gaps before implementation:
+
+```
+/speckit.analyze
+```
+
+This is read-only — it flags issues like "US3 acceptance scenario #2 references a `priority` field not in the data model" so you can fix them before writing code.
+
+---
+
+**Stage 2 — Implement: Build it with parallel agents**
+
+Execute the task list. Claude delegates work to specialized agents that can run in parallel:
+
+```
+/speckit.implement
+```
+
+The orchestrator reads `tasks.md` and dispatches work:
+
+- **`@backend-developer`** — NestJS controllers, services, Prisma schema, DTOs, guards
+- **`@web-developer`** — React components, pages, hooks, unit tests, Figma-matched UI
+
+Backend and frontend tasks on independent branches of the dependency graph run in parallel. Tasks with dependencies wait for their prerequisites to complete.
+
+Once implementation is done:
+
+```
+/commit
+```
+
+---
+
+**Stage 3 — Test: Generate E2E coverage from the spec**
+
+Generate Playwright E2E tests directly from the acceptance scenarios in `spec.md`:
+
+```
+/cgs.qa.e2e
+```
+
+Claude reads your spec's Given/When/Then scenarios and produces one test file per user story:
+
+```
+tests/e2e/task-management/
+├── task-crud.spec.ts          # US1: Create, edit, delete tasks
+├── task-reordering.spec.ts    # US2: Drag-and-drop + keyboard reorder
+├── kanban-board.spec.ts       # US3: Kanban view with status transitions
+└── list-view.spec.ts          # US4: List view with sorting and filtering
+```
+
+Tests follow best practices from the internal Playwright guide skills — role-based locators, web-first assertions, no `waitForTimeout`, proper test isolation.
+
+```
+/commit
+```
+
+---
+
+**Stage 4 — Design sync: Capture app screens to Figma**
+
+Now that the implementation is running, capture every screen state into your Figma file so the design team can see what was built:
+
+```
+/cgs.figma.capture https://figma.com/design/abc123/TaskApp-Designs
+```
+
+Claude discovers screens from your e2e tests, generates a capture script, and pushes frames to Figma at multiple viewports (Desktop, Tablet, Mobile).
+
+```
+/commit
+```
+
+---
+
+**Stage 5 — Link: Connect Figma frames to the spec**
+
+Link the Figma frames back to your `spec.md` so each user story has a direct reference to its design:
+
+```
+/cgs.figma.link https://figma.com/design/abc123/TaskApp-Designs
+```
+
+Claude auto-matches Figma frame names to screens in the spec and updates `spec.md` with the `## Screens` table and `**Design**:` links on each User Story.
+
+```
+/commit
+```
+
+---
+
+**Stage 6 — Visual: Compare implementation accuracy against design**
+
+Run pixel-level comparison to check how closely the implementation matches the Figma designs:
+
+```
+/cgs.figma.visual
+```
+
+This generates `figma-visual.spec.ts` which uses pixelmatch to diff each screen against its Figma frame. Output shows per-screen diff percentages:
+
+```
+✓ Empty State — Desktop: 0.3% diff (threshold: 2%) — PASS
+✗ Kanban Board — Desktop: 4.2% diff (threshold: 2%) — FAIL
+✗ Kanban Board — Mobile: 8.1% diff (threshold: 2%) — FAIL
+✓ Task Detail — Desktop: 1.1% diff (threshold: 2%) — PASS
+```
+
+```
+/commit
+```
+
+---
+
+**Stage 7 — QA Report: Full QA pass with release recommendation**
+
+Run the complete QA pass — this executes E2E tests, re-runs visual comparison (with fresh Figma cache), performs LLM visual investigation on any mismatches, and compiles everything into a single report:
+
+```
+/cgs.qa.report
+```
+
+The report is saved to `reports/task-management-qa-2026-03-12_15-30.md` and includes:
+
+- **Executive summary** — overall PASS/FAIL/CONDITIONAL status
+- **Release recommendation** — READY, CONDITIONAL, NOT READY, or BLOCKED
+- **E2E results** — per-story pass/fail with error details and suggested fixes
+- **Visual comparison** — per-screen diff results
+- **Visual analysis** — for failed screens, LLM-identified findings with severity, expected vs actual, and likely cause
+- **Coverage analysis** — which acceptance scenarios have test coverage
+- **Risk assessment** — flagged risks with impact and mitigation
+- **Recommendations** — prioritized list of actions
+
+```
+/commit
+```
+
+---
+
+**What to do with the report:**
+
+| Recommendation | Meaning | Action |
+|----------------|---------|--------|
+| **READY** | All tests pass, visuals match | Merge the PR and ship |
+| **CONDITIONAL** | E2E pass, but visual discrepancies exist | Review visual findings with designer — may be intentional |
+| **NOT READY** | E2E failures or critical visual issues | Fix the issues, then re-run `/cgs.qa.report` |
+| **BLOCKED** | Tests can't execute | Fix environment or config issue first |
+
+---
+
+**Repeat for every feature.** Each feature gets its own branch, spec directory, and QA report. The full lifecycle creates a clean audit trail:
+
+```
+feature/task-management
+├── specs/task-management/
+│   ├── spec.md              # What to build
+│   ├── plan.md              # How to build it
+│   ├── tasks.md             # Work breakdown
+│   └── data-model.md        # Schema
+├── tests/e2e/task-management/
+│   ├── task-crud.spec.ts    # E2E tests
+│   ├── kanban-board.spec.ts
+│   └── figma-visual.spec.ts # Visual comparison
+└── reports/
+    └── task-management-qa-2026-03-12_15-30.md  # QA report
+```
+
+---
+
+### Example 2: Setting Up Spec Kit on an Existing Project
 
 You have a project with code but no Spec Kit infrastructure. Here's how to bootstrap it.
 
@@ -447,7 +700,7 @@ Now your design team can duplicate the Figma file, create redesigned versions, a
 
 ---
 
-### Example 2: Converting Existing Docs and Code into Specs
+### Example 3: Converting Existing Docs and Code into Specs
 
 You have a running project with existing documentation (PRDs, READMEs, wiki pages, Confluence docs) and working source code, but no formal specs. Here's how to retroactively create specs for each feature.
 
@@ -542,7 +795,7 @@ If Figma screens are linked, the web-developer agent will pull design context di
 
 ---
 
-### Example 3: Capturing App Screens into Figma
+### Example 4: Capturing App Screens into Figma
 
 You have a running application with e2e tests but no Figma designs. You want to capture every screen into Figma so you can use the visual validation workflow and link designs to specs.
 
