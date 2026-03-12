@@ -13,6 +13,7 @@ This repo provides the full infrastructure for spec-driven development: from wri
 - [Agents](#agents)
 - [Skills / Commands](#skills--commands)
   - [Specification Workflow](#specification-workflow)
+  - [QA Workflow](#qa-workflow)
   - [Figma Workflow](#figma-workflow)
 - [Workflow Overview](#workflow-overview)
 - [Real-World Examples](#real-world-examples)
@@ -183,6 +184,79 @@ Converts tasks from `tasks.md` into dependency-ordered GitHub issues.
 ```
 /speckit.taskstoissues
 ```
+
+### QA Workflow
+
+These skills handle test generation, visual analysis, and QA reporting. Located in `.claude/skills/`.
+
+They use internal Playwright guide skills (`_guides.playwright-core`, `_guides.playwright-pom`, `_guides.playwright-cli`) for best practices — you don't invoke the guides directly.
+
+#### `/cgs.qa.e2e` — Generate E2E Tests from Spec
+
+Generates Playwright E2E test suites from speckit `spec.md` acceptance scenarios. Each user story gets its own test file with tests derived from Given/When/Then scenarios.
+
+```
+/cgs.qa.e2e
+/cgs.qa.e2e US1,US2
+/cgs.qa.e2e --update
+```
+
+**Options:** `--update` (overwrite existing test files), `--dry-run` (plan only), story filter
+
+**Produces:** `tests/e2e/<feature>/<story-slug>.spec.ts`, shared helpers/fixtures/page objects as needed
+
+**What it does:**
+1. Reads `spec.md` user stories and acceptance scenarios
+2. Reads `plan.md` for technical context (routes, auth, data model)
+3. Discovers existing test infrastructure (helpers, fixtures, config)
+4. Decides test pattern (POM vs fixtures vs helpers) based on feature complexity
+5. Outputs a test plan for approval, then generates test files
+
+#### `/cgs.qa.visual` — Visual Mismatch Investigation
+
+Deep LLM-powered analysis of screens where the rendered UI diverges from the Figma design. While `/cgs.figma.visual` tells you **how much** differs (pixel percentage), this skill tells you **what exactly** differs.
+
+```
+/cgs.qa.visual
+/cgs.qa.visual "Dashboard"
+/cgs.qa.visual --threshold=0.05 --save-report
+```
+
+**Options:** `--threshold=0.02` (override diff threshold), `--save-report` (save to `specs/<feature>/visual-analysis.md`), screen filter
+
+**Requires:** `FIGMA_TOKEN` environment variable, prior run of `/cgs.figma.visual`
+
+**What it does:**
+1. Reads pixel diff results from `/cgs.figma.visual`
+2. For screens exceeding the threshold, captures three images: rendered UI, Figma export, diff overlay
+3. Uses LLM vision to systematically compare: layout, spacing, typography, colors, components
+4. Reports each finding with severity (Critical/Major/Minor/Cosmetic), expected vs actual values, and likely cause
+
+#### `/cgs.qa.report` — Full QA Report
+
+Runs a complete QA pass — E2E tests + visual comparison + visual investigation — and produces a single timestamped markdown report.
+
+```
+/cgs.qa.report
+/cgs.qa.report --skip-visual
+/cgs.qa.report --story-filter=US1
+```
+
+**Options:** `--skip-visual` (E2E only), `--story-filter=US1,US2` (specific stories), `--threshold=0.02`
+
+**Produces:** `reports/<feature>-qa-<YYYY-MM-DD_HH-mm>.md`
+
+**Visual tests are optional** — if `figma-visual.spec.ts` doesn't exist or `FIGMA_TOKEN` isn't set, the report gracefully skips visual testing and notes it.
+
+**Report includes:**
+- Executive summary with release recommendation (READY / CONDITIONAL / NOT READY / BLOCKED)
+- Test environment details
+- Per-story E2E results with failed test details and suggested fixes
+- Visual comparison results with LLM-analyzed findings
+- Coverage analysis against `spec.md` acceptance scenarios
+- Risk assessment and prioritized recommendations
+
+**The Figma cache is cleared before visual tests** so designs are re-fetched, catching any Figma changes since the last run.
 
 ### Figma Workflow
 
@@ -563,9 +637,15 @@ This generates a Playwright test that compares live rendered pages against Figma
 │   │   ├── speckit.constitution.md    # Project governance
 │   │   └── speckit.taskstoissues.md   # GitHub issue export
 │   ├── skills/
+│   │   ├── _guides.playwright-cli/   # Playwright CLI guide (internal)
+│   │   ├── _guides.playwright-core/  # Playwright testing guide (internal)
+│   │   ├── _guides.playwright-pom/   # Page Object Model guide (internal)
 │   │   ├── cgs.figma.capture/  # Capture app screens to Figma
 │   │   ├── cgs.figma.link/     # Link Figma frames to spec
-│   │   └── cgs.figma.visual/   # Visual comparison against Figma
+│   │   ├── cgs.figma.visual/   # Visual comparison against Figma
+│   │   ├── cgs.qa.e2e/         # Generate E2E tests from spec
+│   │   ├── cgs.qa.report/      # Full QA pass with report
+│   │   └── cgs.qa.visual/      # LLM visual mismatch analysis
 │   └── settings.local.json            # Local permissions
 ├── .specify/
 │   ├── memory/
