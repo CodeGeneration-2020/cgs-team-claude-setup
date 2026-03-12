@@ -188,42 +188,42 @@ Converts tasks from `tasks.md` into dependency-ordered GitHub issues.
 
 These skills handle the Figma design integration pipeline. Located in `.claude/skills/`.
 
-#### `/cgs-team-skills.figma.capture` — Capture Screens to Figma
+#### `/cgs.figma.capture` — Capture Screens to Figma
 
 Captures the app's screen states from e2e tests and pushes them into a Figma file as design frames.
 
 ```
-/cgs-team-skills.figma.capture https://figma.com/design/abc123/file-name
-/cgs-team-skills.figma.capture https://figma.com/design/abc123/file-name --new
-/cgs-team-skills.figma.capture https://figma.com/design/abc123/file-name "Add Task Modal" --viewport=D,M
+/cgs.figma.capture https://figma.com/design/abc123/file-name
+/cgs.figma.capture https://figma.com/design/abc123/file-name --new
+/cgs.figma.capture https://figma.com/design/abc123/file-name "Add Task Modal" --viewport=D,M
 ```
 
 **Options:** `--new` (only new screens), `--viewport=D,M,T` (filter viewports), screen filter (substring match)
 
 **Produces:** `tests/e2e/<feature>/capture-screens.spec.ts`, Figma frames
 
-#### `/cgs-team-skills.figma.link` — Link Figma to Spec
+#### `/cgs.figma.link` — Link Figma to Spec
 
 Generates the `## Screens` section in `spec.md` and auto-matches Figma frames to each screen by name similarity.
 
 ```
-/cgs-team-skills.figma.link https://figma.com/design/abc123/file-name
-/cgs-team-skills.figma.link https://figma.com/design/abc123/file-name US1,US3
-/cgs-team-skills.figma.link https://figma.com/design/abc123/file-name --force
+/cgs.figma.link https://figma.com/design/abc123/file-name
+/cgs.figma.link https://figma.com/design/abc123/file-name US1,US3
+/cgs.figma.link https://figma.com/design/abc123/file-name --force
 ```
 
 **Options:** `--force` (overwrite existing links), story filter
 
 **Produces:** Updated `spec.md` with `## Screens` table and `**Design**:` links on User Stories
 
-#### `/cgs-team-skills.figma.visual` — Visual Comparison
+#### `/cgs.figma.visual` — Visual Comparison
 
 Runs pixelmatch-based visual comparison of rendered UI against Figma designs. Each screen with a Figma Node value gets a pixel-level diff test.
 
 ```
-/cgs-team-skills.figma.visual
-/cgs-team-skills.figma.visual US1
-/cgs-team-skills.figma.visual --threshold=0.05
+/cgs.figma.visual
+/cgs.figma.visual US1
+/cgs.figma.visual --threshold=0.05
 ```
 
 **Options:** `--threshold=0.05` (override default 2% diff threshold), screen/story filter
@@ -232,7 +232,7 @@ Runs pixelmatch-based visual comparison of rendered UI against Figma designs. Ea
 
 **Pipeline:**
 ```
-spec.md → e2e tests → /cgs-team-skills.figma.capture → /cgs-team-skills.figma.link → /cgs-team-skills.figma.visual
+spec.md → e2e tests → /cgs.figma.capture → /cgs.figma.link → /cgs.figma.visual
 ```
 
 ---
@@ -253,19 +253,19 @@ spec.md → e2e tests → /cgs-team-skills.figma.capture → /cgs-team-skills.fi
 
 ```
 /speckit.specify "feature description"                         → spec.md
-/cgs-team-skills.figma.link <figma-url>                        → spec.md with Figma screen links
+/cgs.figma.link <figma-url>                        → spec.md with Figma screen links
 /speckit.plan                                                  → plan.md
 /speckit.tasks                                                 → tasks.md
 @web-developer implement from Figma                            → UI code
-/cgs-team-skills.figma.visual                                  → pixel-level design comparison
+/cgs.figma.visual                                  → pixel-level design comparison
 ```
 
 ### Figma Capture & Validation Pipeline
 
 ```
-/cgs-team-skills.figma.capture <figma-url>                     → capture app screens to Figma
-/cgs-team-skills.figma.link <figma-url>                        → link Figma frames to spec
-/cgs-team-skills.figma.visual                                  → pixel-level comparison report
+/cgs.figma.capture <figma-url>                     → capture app screens to Figma
+/cgs.figma.link <figma-url>                        → link Figma frames to spec
+/cgs.figma.visual                                  → pixel-level comparison report
 ```
 
 ---
@@ -353,16 +353,16 @@ Claude processes tasks in order, delegating to the backend-developer and web-dev
 If you have e2e tests, capture your app's screens into Figma. This gives your design team a baseline to work from for future redesigns:
 
 ```
-/cgs-team-skills.figma.capture https://figma.com/design/abc123/MyApp-Current-UI
+/cgs.figma.capture https://figma.com/design/abc123/MyApp-Current-UI
 ```
 
 Then link the Figma file to your specs:
 
 ```
-/cgs-team-skills.figma.link https://figma.com/design/abc123/MyApp-Current-UI
+/cgs.figma.link https://figma.com/design/abc123/MyApp-Current-UI
 ```
 
-Now your design team can duplicate the Figma file, create redesigned versions, and developers can use `/cgs-team-skills.figma.visual` to validate implementations against the new designs.
+Now your design team can duplicate the Figma file, create redesigned versions, and developers can use `/cgs.figma.visual` to validate implementations against the new designs.
 
 **What you get:**
 - MCP servers (Playwright, Figma, Chrome DevTools) for browser automation and design integration
@@ -445,10 +445,10 @@ This cross-checks `spec.md`, `plan.md`, and `tasks.md` for consistency. It catch
 If you have Figma designs for this feature, link them to the spec:
 
 ```
-/cgs-team-skills.figma.link https://figma.com/design/abc123/MyDesign
+/cgs.figma.link https://figma.com/design/abc123/MyDesign
 ```
 
-Claude reads the Figma file, finds all frames, and auto-matches them to screens in your `spec.md`. Each User Story gets a `**Design**:` link to the relevant Figma frame. This enables `/cgs-team-skills.figma.visual` pixel-level comparisons later.
+Claude reads the Figma file, finds all frames, and auto-matches them to screens in your `spec.md`. Each User Story gets a `**Design**:` link to the relevant Figma frame. This enables `/cgs.figma.visual` pixel-level comparisons later.
 
 **Step 8 — Implement remaining work**
 
@@ -482,7 +482,7 @@ You have a running application with e2e tests but no Figma designs. You want to 
 The capture skill discovers screens from your e2e tests, generates a Playwright capture script, and pushes frames to Figma:
 
 ```
-/cgs-team-skills.figma.capture https://figma.com/design/abc123/My-App-Screens
+/cgs.figma.capture https://figma.com/design/abc123/My-App-Screens
 ```
 
 Claude will:
@@ -497,19 +497,19 @@ Claude will:
 After adding new e2e tests, capture only the screens not yet in Figma:
 
 ```
-/cgs-team-skills.figma.capture https://figma.com/design/abc123/My-App-Screens --new
+/cgs.figma.capture https://figma.com/design/abc123/My-App-Screens --new
 ```
 
 **Step 3 — Capture specific screens or viewports**
 
 ```
-/cgs-team-skills.figma.capture https://figma.com/design/abc123/My-App-Screens "Add Task Modal" --viewport=D,M
+/cgs.figma.capture https://figma.com/design/abc123/My-App-Screens "Add Task Modal" --viewport=D,M
 ```
 
 **Step 4 — Link Figma frames to specs**
 
 ```
-/cgs-team-skills.figma.link https://figma.com/design/abc123/My-App-Screens
+/cgs.figma.link https://figma.com/design/abc123/My-App-Screens
 ```
 
 Claude reads the Figma file structure, auto-matches frames to screens by name similarity, and updates `spec.md` with the `## Screens` table and `**Design**:` links on each User Story.
@@ -519,7 +519,7 @@ Claude reads the Figma file structure, auto-matches frames to screens by name si
 With screens linked, run pixel-level comparison anytime:
 
 ```
-/cgs-team-skills.figma.visual
+/cgs.figma.visual
 ```
 
 This generates a Playwright test that compares live rendered pages against Figma frames using pixelmatch with a 2% default threshold. As the app evolves, re-capture updated screens and re-run to catch visual regressions.
@@ -528,17 +528,17 @@ This generates a Playwright test that compares live rendered pages against Figma
 
 ```
 # 1. Capture all screens into Figma from e2e tests
-/cgs-team-skills.figma.capture https://figma.com/design/abc123/...
+/cgs.figma.capture https://figma.com/design/abc123/...
 
 # 2. Link Figma frames to spec
-/cgs-team-skills.figma.link https://figma.com/design/abc123/...
+/cgs.figma.link https://figma.com/design/abc123/...
 
 # 3. Pixel-level visual comparison
-/cgs-team-skills.figma.visual
+/cgs.figma.visual
 
 # 4. After code changes, re-capture and re-validate
-/cgs-team-skills.figma.capture https://figma.com/design/abc123/... "Dashboard"
-/cgs-team-skills.figma.visual
+/cgs.figma.capture https://figma.com/design/abc123/... "Dashboard"
+/cgs.figma.visual
 ```
 
 ---
@@ -563,9 +563,9 @@ This generates a Playwright test that compares live rendered pages against Figma
 │   │   ├── speckit.constitution.md    # Project governance
 │   │   └── speckit.taskstoissues.md   # GitHub issue export
 │   ├── skills/
-│   │   ├── cgs-team-skills.figma.capture/  # Capture app screens to Figma
-│   │   ├── cgs-team-skills.figma.link/     # Link Figma frames to spec
-│   │   └── cgs-team-skills.figma.visual/   # Visual comparison against Figma
+│   │   ├── cgs.figma.capture/  # Capture app screens to Figma
+│   │   ├── cgs.figma.link/     # Link Figma frames to spec
+│   │   └── cgs.figma.visual/   # Visual comparison against Figma
 │   └── settings.local.json            # Local permissions
 ├── .specify/
 │   ├── memory/

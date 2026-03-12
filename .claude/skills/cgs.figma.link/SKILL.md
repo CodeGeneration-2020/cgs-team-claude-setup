@@ -1,5 +1,5 @@
 ---
-name: cgs-team-skills.figma.link
+name: cgs.figma.link
 description: Generate the Screens section in spec.md and link Figma frames for visual testing. Use when linking Figma designs to spec screens or generating the Screens table.
 disable-model-invocation: true
 argument-hint: "<figma-url> [story-filter] [--force]"
@@ -24,7 +24,7 @@ Generate the `## Screens` section in `spec.md` AND link Figma design frames to e
 
 **Pipeline position:**
 ```
-spec.md -> /cgs-team-skills.figma.link -> /cgs-team-skills.figma.visual
+spec.md -> /cgs.figma.link -> /cgs.figma.visual
 ```
 
 ## Operating Constraints
@@ -58,7 +58,7 @@ If the branch name doesn't map to a feature directory, ask the user to specify t
 | `figma.com/file/{fileKey}/...` | `{fileKey}` | -- |
 | `figma.com/design/{fileKey}/branch/{branchKey}/{fileName}` | `{branchKey}` | -- |
 
-No valid URL: `"ERROR: No valid Figma URL provided. Usage: /cgs-team-skills.figma.link https://figma.com/design/{fileKey}/{fileName}"`
+No valid URL: `"ERROR: No valid Figma URL provided. Usage: /cgs.figma.link https://figma.com/design/{fileKey}/{fileName}"`
 
 ### 3. Parse Specification
 
@@ -180,7 +180,7 @@ Updated spec.md:
   - Screens: N total, M linked to Figma
 
 Next steps:
-  - Run /cgs-team-skills.figma.visual to compare against Figma designs
+  - Run /cgs.figma.visual to compare against Figma designs
   - To link remaining screens, re-run with --force or edit Figma Node column
 ```
 
