@@ -13,6 +13,7 @@ This repo provides the full infrastructure for spec-driven development: from wri
 - [Agents](#agents)
 - [Skills / Commands](#skills--commands)
   - [Specification Workflow](#specification-workflow)
+  - [BA Workflow](#ba-workflow)
   - [QA Workflow](#qa-workflow)
   - [Figma Workflow](#figma-workflow)
 - [Workflow Overview](#workflow-overview)
@@ -185,6 +186,42 @@ Converts tasks from `tasks.md` into dependency-ordered GitHub issues.
 ```
 /speckit.taskstoissues
 ```
+
+### BA Workflow
+
+Business analysis skills for scope and requirements validation. Located in `.claude/skills/`.
+
+#### `/cgs.ba.inscope` — Validate Requirement Scope
+
+Analyzes whether new requirements fit within the project's defined boundaries by evaluating them against all available Speckit artifacts (constitution, existing specs, plans, tasks).
+
+```
+/cgs.ba.inscope Add a user notifications feature with a notification bell and notifications page
+/cgs.ba.inscope path/to/requirements.md
+/cgs.ba.inscope We need a Python ML microservice with MongoDB
+```
+
+**Input:** Plain text requirements, a file path, or multiple requirements separated by line breaks
+
+**Produces:** A structured Scope Analysis Report with:
+- **Overall verdict**: IN SCOPE / PARTIALLY IN SCOPE / OUT OF SCOPE
+- **Confidence level**: High / Medium / Low
+- **Dimension breakdown table**: Architecture Alignment, Tech Stack Compliance, Business Domain Fit, Principle Compliance, Feasibility
+- **Detailed findings** with evidence from specific Speckit artifacts
+- **Recommendations**: next steps for in-scope items, adjustment suggestions for partial, alternatives for out-of-scope
+
+**What it checks against:**
+1. **Constitution** (`.specify/memory/constitution.md`) — architecture, tech stack, principles, naming conventions
+2. **Existing feature specs** — business domains already covered
+3. **Implementation plans** — architectural decisions, API contracts, data models
+4. **Task breakdowns** — implementation patterns and work granularity
+5. **Project structure** — existing modules, packages, and code organization
+
+**Key behaviors:**
+- Read-only — never modifies project files
+- Evidence-based — every finding cites a specific Speckit artifact
+- Charitable interpretation — flags ambiguity rather than assuming the worst
+- Project-agnostic — works with any project that uses Speckit
 
 ### QA Workflow
 
@@ -893,6 +930,7 @@ This generates a Playwright test that compares live rendered pages against Figma
 │   │   ├── _guides.playwright-cli/   # Playwright CLI guide (internal)
 │   │   ├── _guides.playwright-core/  # Playwright testing guide (internal)
 │   │   ├── _guides.playwright-pom/   # Page Object Model guide (internal)
+│   │   ├── cgs.ba.inscope/     # Validate requirement scope
 │   │   ├── cgs.figma.capture/  # Capture app screens to Figma
 │   │   ├── cgs.figma.link/     # Link Figma frames to spec
 │   │   ├── cgs.figma.visual/   # Visual comparison against Figma
