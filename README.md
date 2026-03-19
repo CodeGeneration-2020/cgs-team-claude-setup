@@ -12,10 +12,12 @@ This repo provides the full infrastructure for spec-driven development: from wri
 - [MCP Servers](#mcp-servers)
 - [Agents](#agents)
 - [Skills / Commands](#skills--commands)
+  - [Setup & Bootstrap](#setup--bootstrap)
   - [Specification Workflow](#specification-workflow)
   - [BA Workflow](#ba-workflow)
   - [QA Workflow](#qa-workflow)
   - [Figma Workflow](#figma-workflow)
+  - [Code Review](#code-review)
 - [Workflow Overview](#workflow-overview)
 - [Real-World Examples](#real-world-examples)
   - [Example 1: Full Feature Lifecycle — Spec to Release](#example-1-full-feature-lifecycle--spec-to-release)
@@ -101,7 +103,42 @@ Invoke directly:
 
 ## Skills / Commands
 
-Located in `.claude/commands/`. Invoke them by typing the command name in Claude Code (e.g., `/speckit.specify`).
+Located in `.claude/commands/` and `.claude/skills/`. Invoke them by typing the command name in Claude Code (e.g., `/speckit.specify`).
+
+### Setup & Bootstrap
+
+Skills for bootstrapping new projects with the CGS toolchain. Located in `.claude/skills/`. These are also installed at the **user level** (`~/.claude/skills/`) so they work from any project.
+
+#### `/cgs.claude.setup` — Bootstrap Project with CGS Toolchain
+
+Copies all CGS skills, speckit commands, agents, MCP config, and constitution from the latest version of this repo into the current project. Asks whether the project uses the same tech stack as the CGS default — if not, delegates to `/cgs.claude.constitution` to generate a tailored constitution.
+
+```
+/cgs.claude.setup
+```
+
+**What it copies:**
+- All `cgs.*` skills (BA, QA, Figma, review, setup, constitution)
+- All `speckit.*` commands (specify, clarify, plan, tasks, implement, analyze, checklist, constitution, taskstoissues)
+- Agent definitions (backend-developer, web-developer)
+- MCP config (`.mcp.json`), skills lock, settings
+- Speckit templates and scripts (`.specify/`)
+
+**Tech stack gate (mandatory):** The skill asks whether the project uses the CGS default stack (NestJS/React/React Native/Turborepo). If yes, the CGS constitution is copied as-is. If no, the user must describe their stack, and `/cgs.claude.constitution` generates a tailored constitution.
+
+#### `/cgs.claude.constitution` — Generate Tailored Constitution
+
+Generates a project constitution adapted to the project's specific tech stack while preserving all stack-agnostic code quality principles from the CGS reference constitution. Use this when the project uses a different stack than the CGS default.
+
+```
+/cgs.claude.constitution Frontend: Next.js + TypeScript + Tailwind, no backend, Vercel deployment
+/cgs.claude.constitution Backend: Django + Python, Frontend: Vue 3 + Pinia, DB: PostgreSQL
+```
+
+**Preserved principles** (adapted to your stack, never removed):
+Clean Architecture & SOLID, Modular Architecture, Strict Type Safety, Security by Design, Testing Discipline (80%+ coverage), Independent Deployability, Observability-First, Shared-Before-Custom, Code Quality Standards, Naming Conventions, Error Handling, Design Token Management, PR & Review Workflow, Governance.
+
+**Stack-specific sections** are adapted: technology stack tables, folder structures, behavioral contracts, tool references, and package layouts are all rewritten to match your actual tech stack. Sections that don't apply (e.g., mobile if you have none) are removed.
 
 ### Specification Workflow
 
@@ -346,6 +383,25 @@ Runs pixelmatch-based visual comparison of rendered UI against Figma designs. Ea
 ```
 spec.md → e2e tests → /cgs.figma.capture → /cgs.figma.link → /cgs.figma.visual
 ```
+
+### Code Review
+
+#### `/cgs.review` — Interactive Code Review & Fix
+
+Multi-stage interactive code review that analyzes your changes, presents issues one by one, and offers auto-fix for each.
+
+```
+/cgs.review
+/cgs.review src/features/auth/
+```
+
+**Stages:**
+1. **Scope** — Detects uncommitted changes, last commit, or branch diff and lets you choose what to review
+2. **Review** — Launches a subagent to find bugs, security issues, performance problems, race conditions, and edge cases
+3. **Resolution** — Walks through each issue with options: auto-fix, fix yourself, reject (false positive), or skip
+4. **Wrap up** — Summary and optional re-review of new changes
+
+**Issue severities:** Critical, Warning, Suggestion
 
 ---
 
@@ -640,7 +696,22 @@ feature/task-management
 
 You have a project with code but no Spec Kit infrastructure. Here's how to bootstrap it.
 
-**Step 1 — Copy the setup files into your project**
+**Step 1 — Bootstrap with `/cgs.claude.setup`**
+
+The fastest way to set up a project. Start Claude Code in your project directory and run:
+
+```
+/cgs.claude.setup
+```
+
+This fetches the latest CGS toolchain from GitHub and copies all skills, commands, agents, MCP config, and speckit templates into your project. It then asks about your tech stack:
+
+- **Same stack as CGS default** (NestJS/React/React Native/Turborepo) → copies the constitution as-is
+- **Different stack** → asks you to describe your stack, then generates a tailored constitution via `/cgs.claude.constitution`
+
+**Alternative: Manual setup**
+
+If you prefer manual control:
 
 ```bash
 # From your existing project root
@@ -649,18 +720,11 @@ cp -r /path/to/cgs-team-claude-setup/.claude .
 cp -r /path/to/cgs-team-claude-setup/.specify .
 ```
 
-**Step 2 — Create the project constitution**
-
-Start Claude Code in your project and define the rules that govern your codebase:
+Then create the constitution:
 
 ```
 /speckit.constitution
 ```
-
-Claude will ask about your tech stack, architecture principles, testing requirements, and coding standards. Answer based on your existing project. For example:
-
-> **Claude:** What is the primary tech stack?
-> **You:** React 18 + TypeScript frontend, NestJS backend, PostgreSQL with Prisma ORM, deployed on AWS
 
 The constitution is written to `.specify/memory/constitution.md`. All future specs, plans, and implementations will follow these rules.
 
@@ -731,8 +795,8 @@ Now your design team can duplicate the Figma file, create redesigned versions, a
 **What you get:**
 - MCP servers (Playwright, Figma, Chrome DevTools) for browser automation and design integration
 - 2 specialized agents (backend and web developer) that understand your project's conventions
-- 12 skills for the full specify → plan → implement → Figma validation lifecycle
-- A constitution that enforces consistency across all future work
+- 20+ skills covering the full specify → plan → implement → test → Figma validation → code review lifecycle
+- A constitution (default or tailored to your stack) that enforces consistency across all future work
 - (Optional) Figma baseline for your design team to iterate on
 
 ---
@@ -927,16 +991,19 @@ This generates a Playwright test that compares live rendered pages against Figma
 │   │   ├── speckit.constitution.md    # Project governance
 │   │   └── speckit.taskstoissues.md   # GitHub issue export
 │   ├── skills/
-│   │   ├── _guides.playwright-cli/   # Playwright CLI guide (internal)
-│   │   ├── _guides.playwright-core/  # Playwright testing guide (internal)
-│   │   ├── _guides.playwright-pom/   # Page Object Model guide (internal)
-│   │   ├── cgs.ba.inscope/     # Validate requirement scope
-│   │   ├── cgs.figma.capture/  # Capture app screens to Figma
-│   │   ├── cgs.figma.link/     # Link Figma frames to spec
-│   │   ├── cgs.figma.visual/   # Visual comparison against Figma
-│   │   ├── cgs.qa.e2e/         # Generate E2E tests from spec
-│   │   ├── cgs.qa.report/      # Full QA pass with report
-│   │   └── cgs.qa.visual/      # LLM visual mismatch analysis
+│   │   ├── _guides.playwright-cli/       # Playwright CLI guide (internal)
+│   │   ├── _guides.playwright-core/      # Playwright testing guide (internal)
+│   │   ├── _guides.playwright-pom/       # Page Object Model guide (internal)
+│   │   ├── cgs.ba.inscope/              # Validate requirement scope
+│   │   ├── cgs.claude.constitution/     # Generate tailored constitution
+│   │   ├── cgs.claude.setup/           # Bootstrap project with CGS toolchain
+│   │   ├── cgs.figma.capture/          # Capture app screens to Figma
+│   │   ├── cgs.figma.link/            # Link Figma frames to spec
+│   │   ├── cgs.figma.visual/          # Visual comparison against Figma
+│   │   ├── cgs.qa.e2e/                # Generate E2E tests from spec
+│   │   ├── cgs.qa.report/             # Full QA pass with report
+│   │   ├── cgs.qa.visual/             # LLM visual mismatch analysis
+│   │   └── cgs.review/                # Interactive code review & fix
 │   └── settings.local.json            # Local permissions
 ├── .specify/
 │   ├── memory/
