@@ -208,6 +208,7 @@ plan.md GAP-6 note, tasks.md T205 entry + epic status header
 - **NEVER** use `git add -A` or `git add .` — always stage specific files
 - **NEVER** amend previous commits — always create new ones
 - **NEVER** skip hooks (`--no-verify`)
+- **ALWAYS** run git hooks on every commit — let pre-commit and commit-msg hooks execute normally
 - **ALWAYS** run `pnpm lint` and `pnpm build` before the first commit and verify they pass
 - **ALWAYS** fix lint/build errors before committing — never commit broken code
 - **ALWAYS** verify `git status -s` shows clean working tree after all commits
